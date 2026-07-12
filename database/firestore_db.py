@@ -61,7 +61,7 @@ def _query(name, filters=None, order_by=None, limit=None):
     q = _col(name)
     if filters:
         for field_name, op, value in filters:
-            q = q.where(field_name, op, value)
+            q = q.where(filter=firestore.FieldFilter(field_name, op, value))
     if order_by:
         desc = order_by.startswith("-")
         field_name = order_by.lstrip("-")

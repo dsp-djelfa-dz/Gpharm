@@ -3,6 +3,7 @@ google-cloud-firestore
 firebase-admin
 fpdf2
 arabic-reshaper
+python-bidi
 Jinja2
 pytz==2023.3.post1
 python-dotenv
