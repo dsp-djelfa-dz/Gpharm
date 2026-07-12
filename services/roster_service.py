@@ -9,25 +9,24 @@ def get_days_in_month(year, month):
     return [date(year, month, day) for day in range(1, num_days + 1)]
 
 
-def generate_roster(year, month, daira_id):
+def generate_roster(year, month, daira_id, cached=None):
     month_start = date(year, month, 1)
     days = get_days_in_month(year, month)
-    month_end = days[-1]
 
     municipalities = db.get_municipalities_by_daira(str(daira_id))
     if not municipalities:
         return
 
-    all_pharmacists = db.get_all_pharmacists_dict()
-    existing_duties = db.get_duties_for_month_bulk(year, month)
-
-    prev_duties = []
-    if month == 1:
-        prev_duties = db.get_duties_before_bulk(month_start.isoformat())
+    if cached:
+        all_pharmacists = cached["pharmacists"]
+        all_vacations = cached["vacations"]
+        prev_duties = cached["prev_duties"]
+        existing_duties = cached["existing_duties"]
     else:
-        prev_duties = db.get_duties_before_bulk(month_start.isoformat())
-
-    all_vacations = db.get_all_vacations_dict()
+        all_pharmacists = db.get_all_pharmacists_dict()
+        all_vacations = db.get_all_vacations_dict()
+        existing_duties = db.get_duties_for_month_bulk(year, month)
+        prev_duties = db.get_all_duties_before_bulk(month_start.isoformat())
 
     existing_keys = set()
     for d in existing_duties:
@@ -128,6 +127,27 @@ def generate_roster(year, month, daira_id):
 
     if all_new_duties:
         db.batch_create_duties(all_new_duties)
+
+
+def generate_roster_cached(year, month, daira_ids):
+    month_start = date(year, month, 1)
+
+    all_pharmacists = db.get_all_pharmacists_dict()
+    all_vacations = db.get_all_vacations_dict()
+    existing_duties = db.get_duties_for_month_bulk(year, month)
+    prev_duties = db.get_all_duties_before_bulk(month_start.isoformat())
+
+    cached = {
+        "pharmacists": all_pharmacists,
+        "vacations": all_vacations,
+        "existing_duties": existing_duties,
+        "prev_duties": prev_duties,
+    }
+
+    for daira_id in daira_ids:
+        generate_roster(year, month, daira_id, cached=cached)
+
+    return cached
 
 
 def get_roster_data(year, month, daira_id):

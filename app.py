@@ -22,6 +22,16 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    traceback.print_exc()
+    return jsonify({"error": str(e)}), 500
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -38,7 +48,7 @@ try:
 except Exception:
     pass
 
-from services.roster_service import generate_roster, get_roster_data, get_days_in_month
+from services.roster_service import generate_roster, generate_roster_cached, get_roster_data, get_days_in_month
 from services.pdf_service import generate_roster_pdf, generate_batch_roster_pdf
 import calendar
 
@@ -207,10 +217,10 @@ def generate_all_dairas_pdf_api():
         for m in all_municipalities:
             muni_by_daira.setdefault(m.daira_id, []).append(m)
 
-        for daira in dairas:
-            generate_roster(year, month, daira.id)
+        daira_ids = [d.id for d in dairas]
+        cached = generate_roster_cached(year, month, daira_ids)
 
-        pharmacist_dict = db.get_all_pharmacists_dict()
+        pharmacist_dict = cached["pharmacists"]
         all_duties = db.get_duties_for_month_bulk(year, month)
 
         muni_to_daira = {m.id: m.daira_id for m in all_municipalities}

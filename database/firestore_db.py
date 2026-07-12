@@ -399,8 +399,12 @@ def get_duties_for_month_bulk(year: int, month: int) -> list[DutySchedule]:
         end_date = date(year, month + 1, 1)
     start_str = start_date.isoformat()
     end_str = end_date.isoformat()
-    docs = _query_all("duty_schedule", [("date", ">=", start_str), ("date", "<", end_str)])
-    return [DutySchedule.from_dict(did, d) for did, d in docs]
+    docs = list(_col("duty_schedule").where(
+        filter=firestore.FieldFilter("date", ">=", start_str)
+    ).where(
+        filter=firestore.FieldFilter("date", "<", end_str)
+    ).stream())
+    return [DutySchedule.from_dict(d.id, d.to_dict()) for d in docs]
 
 
 def get_all_vacations_dict() -> dict[str, list[Vacation]]:
@@ -413,5 +417,9 @@ def get_all_vacations_dict() -> dict[str, list[Vacation]]:
 
 
 def get_all_duties_before_bulk(date_str: str) -> list[DutySchedule]:
-    docs = _query_all("duty_schedule", [("date", "<", date_str)])
-    return [DutySchedule.from_dict(did, d) for did, d in docs]
+    docs = list(_col("duty_schedule").where(
+        filter=firestore.FieldFilter("date", "<", date_str)
+    ).stream())
+    result = [DutySchedule.from_dict(d.id, d.to_dict()) for d in docs]
+    result.sort(key=lambda x: x.date, reverse=True)
+    return result[:200]
