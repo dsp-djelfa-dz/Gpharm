@@ -8,6 +8,7 @@ from database import firestore_db as db
 class RosterPDF(FPDF):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._custom_font = False
         win_regular = r"C:\Windows\Fonts\arial.ttf"
         win_bold = r"C:\Windows\Fonts\arialbd.ttf"
         linux_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
@@ -18,15 +19,25 @@ class RosterPDF(FPDF):
 
         if os.path.isfile(regular):
             self.add_font("Arial", "", regular)
+            self._custom_font = True
         if os.path.isfile(bold):
             self.add_font("Arial", "B", bold)
-        self.set_font("Arial", size=9)
+            self._custom_font = True
+
+        if self._custom_font:
+            self.set_font("Arial", size=9)
+        else:
+            self.set_font("Helvetica", size=9)
+
+    @property
+    def fn(self):
+        return "Arial" if self._custom_font else "Helvetica"
 
     def main_header(self, wilaya_fr, title_data):
         # 1. Republic and Ministry (Centered)
         # Unified Font and Spacing as requested
         self.set_y(2)
-        self.set_font("Arial", "B", 10)
+        self.set_font(self.fn, "B", 10)
         self.cell(0, 5, "République Algérienne Démocratique et Populaire", ln=True, align="C")
         self.cell(0, 5, fix_text("Ministère de la Santé"), ln=True, align="C")
         self.cell(0, 5, f"Direction de la Santé et de la Population - Wilaya de {wilaya_fr}", ln=True, align="C")
@@ -36,7 +47,7 @@ class RosterPDF(FPDF):
         # 3. Stylish Title Bar (Combined)
         self.set_fill_color(255, 255, 255) # White background
         self.set_text_color(0, 0, 0) # Black text
-        self.set_font("Arial", "B", 8)
+        self.set_font(self.fn, "B", 8)
         
         page_width = self.w - 10
         
@@ -65,7 +76,7 @@ def get_text_lines(pdf, text, width, font_style, font_size):
     """
     if not text:
         return 0
-    pdf.set_font("Arial", font_style, font_size)
+    pdf.set_font(pdf.fn, font_style, font_size)
     text_w = pdf.get_string_width(text)
     if text_w == 0:
         return 0
@@ -114,7 +125,7 @@ def generate_batch_roster_pdf(year, month, dairas_data):
         
         # Table Header
         pdf.set_fill_color(241, 245, 249)
-        pdf.set_font("Arial", "B", 8)
+        pdf.set_font(pdf.fn, "B", 8)
         h = 8
         
         pdf.cell(date_w, h, "Date", border=1, align="C", fill=True)
@@ -125,7 +136,7 @@ def generate_batch_roster_pdf(year, month, dairas_data):
         pdf.ln()
 
         # Table Body
-        pdf.set_font("Arial", "", 7)
+        pdf.set_font(pdf.fn, "", 7)
         
         for i, (date_obj, day_name, day_name_ar, duties) in enumerate(table_data):
             is_holiday = is_holiday_or_friday(date_obj)
@@ -182,7 +193,7 @@ def generate_batch_roster_pdf(year, month, dairas_data):
                 pdf.set_fill_color(255, 255, 255)
                 
             fill = True
-            pdf.set_font("Arial", "B" if is_holiday else "", 7)
+            pdf.set_font(pdf.fn, "B" if is_holiday else "", 7)
             
             # Check for page break
             if pdf.get_y() + current_row_h > 295:
@@ -190,13 +201,13 @@ def generate_batch_roster_pdf(year, month, dairas_data):
                 pdf.main_header("Djelfa", title_data)
                 # Redraw Header
                 pdf.set_fill_color(241, 245, 249)
-                pdf.set_font("Arial", "B", 8)
+                pdf.set_font(pdf.fn, "B", 8)
                 pdf.cell(date_w, h, "Date", border=1, align="C", fill=True)
                 pdf.cell(day_name_w, h, "Jour", border=1, align="C", fill=True)
                 for muni in municipalities[:num_muni]:
                     pdf.cell(muni_w, h, muni.name_fr.upper(), border=1, align="C", fill=True)
                 pdf.ln()
-                pdf.set_font("Arial", "", 7)
+                pdf.set_font(pdf.fn, "", 7)
                 # Reset fill
                 if is_holiday:
                     pdf.set_fill_color(224, 224, 224)
@@ -245,13 +256,13 @@ def generate_batch_roster_pdf(year, month, dairas_data):
                 cell_padding = 1
                 
                 if content["day_text"]:
-                    pdf.set_font("Arial", "B", 6)
+                    pdf.set_font(pdf.fn, "B", 6)
                     pdf.set_text_color(185, 28, 28)
                     pdf.set_xy(curr_x + 1, y_start + cell_padding)
                     pdf.multi_cell(muni_w - 2, 2.5, content["day_text"], align="L")
                 
                 if content["night_text"]:
-                    pdf.set_font("Arial", "", 6)
+                    pdf.set_font(pdf.fn, "", 6)
                     pdf.set_text_color(0, 0, 0)
                     
                     # Calculate Y position for night text
