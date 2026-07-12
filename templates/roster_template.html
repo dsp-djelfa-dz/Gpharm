@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Garde Pharmacie - {{ month_name }} {{ year }}</title>
+    <link rel="stylesheet" href="{{ css_path }}">
+</head>
+<body class="landscape">
+    <div class="header">
+        
+        <div class="republic">République Algérienne Démocratique et Populaire</div>
+        
+        <table class="header-table">
+            <tr>
+                <td class="logo-left">
+                    Ministère de la Santé<br>                    
+                </td>
+                <td class="center-title">
+                    <h2>TABLEAU DE GARDE DES OFFICINES</h2>
+                    <h3>Mois de : {{ month_name }} {{ year }}</h3>
+                    <h4>Circonscription : {{ daira_name }}</h4>
+                </td>
+                <td class="logo-right">
+                    ولاية {{ wilaya_name }}<br>
+                    Wilaya de {{ wilaya_name_fr }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="roster-table">
+        <thead>
+            <tr>
+                <th>Date / التاريخ</th>
+                <th>Jour / اليوم</th>
+                {% for muni in municipalities %}
+                <th>{{ muni.name_fr }}<br>{{ muni.name_ar }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for date_obj, day_name, day_name_ar, duties in table_data %}
+            <tr class="{{ 'holiday' if duties[0].is_holiday else '' }}">
+                <td class="date-col">{{ date_obj.strftime('%d/%m/%Y') }}</td>
+                <td class="day-col">{{ day_name }} / {{ day_name_ar }}</td>
+                {% for duty in duties %}
+                <td class="pharmacist-col">
+                    <div class="name-ar">{{ duty.pharmacist.name_ar }}</div>
+                    <div class="name-fr">{{ duty.pharmacist.name_fr }}</div>
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div class="signature-box">
+            <p>Le Directeur de la Santé</p>
+        </div>
+    </div>
+</body>
+</html>

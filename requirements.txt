@@ -1,0 +1,14 @@
+Flask
+google-cloud-firestore
+firebase-admin
+fpdf2
+arabic-reshaper
+Jinja2
+pytz==2023.3.post1
+python-dotenv
+pandas
+openpyxl
+Flask-Login
+xlrd
+gunicorn
+Werkzeug

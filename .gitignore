@@ -1,0 +1,26 @@
+# Environment
+.env
+serviceAccountKey.json
+FIREBASE_CREDENTIALS_JSON
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Database (SQLite legacy)
+instance/
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

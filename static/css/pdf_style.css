@@ -1,0 +1,93 @@
+@page {
+    size: A4 landscape;
+    margin: 1cm;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    line-height: 1.2;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.republic {
+    font-weight: bold;
+    font-size: 14pt;
+    margin-bottom: 5px;
+}
+
+.header-table {
+    width: 100%;
+    margin-top: 10px;
+    border: none !important;
+}
+
+.header-table td {
+    vertical-align: top;
+    border: none !important;
+}
+
+.center-title h2 { margin: 5px 0; font-size: 16pt; }
+.center-title h3 { margin: 5px 0; font-size: 14pt; }
+.center-title h4 { margin: 5px 0; font-size: 12pt; }
+
+.roster-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.roster-table th, .roster-table td {
+    border: 2px solid #000;
+    padding: 6px;
+    text-align: center;
+}
+
+.roster-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    font-size: 10pt;
+}
+
+.roster-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.roster-table tr.holiday {
+    background-color: #e0e0e0;
+}
+
+.roster-table tr.holiday td {
+    font-weight: bold;
+}
+
+.date-col { width: 10%; }
+.day-col { width: 15%; }
+
+.name-ar {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.name-fr {
+    font-size: 9pt;
+    font-style: italic;
+}
+
+.footer {
+    margin-top: 30px;
+}
+
+.signature-box {
+    float: right;
+    width: 250px;
+    text-align: center;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 100px;
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Gardes - Admin Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            background: var(--primary);
+            font-weight: 600;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="btn-back">← Retour au Tableau de Bord</a>
+        <header>
+            <h1>Historique des Gardes</h1>
+        </header>
+
+        <div class="card">
+            <h2>Mois Générés</h2>
+            <div id="historyList">Chargement...</div>
+        </div>
+    </div>
+
+    <script>
+        const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+        async function loadHistory() {
+            const r = await fetch('/api/roster/generated-months');
+            const data = await r.json();
+            const list = document.getElementById('historyList');
+
+            if (data.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#64748b;">Aucun mois généré.</p>';
+                return;
+            }
+
+            list.innerHTML = data.map(m => `
+                <div class="item-row">
+                    <span><b>${monthNames[m.month - 1]} ${m.year}</b></span>
+                    <button class="danger" onclick="deleteMonth(${m.month}, ${m.year})">Supprimer le mois complet</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteMonth(month, year) {
+            if (!confirm(`Voulez-vous vraiment supprimer TOUTES les gardes pour ${monthNames[month - 1]} ${year} ?`)) return;
+
+            const r = await fetch('/api/roster/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ month, year })
+            });
+
+            if (r.ok) {
+                alert("Mois supprimé avec succès");
+                loadHistory();
+            } else {
+                alert("Erreur lors de la suppression");
+            }
+        }
+
+        loadHistory();
+    </script>
+</body>
+
+</html>

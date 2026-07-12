@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garde Pharmacie - Admin Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin: 0 0 15px 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: var(--primary);
+            transition: opacity 0.2s;
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.success {
+            background: var(--success);
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .arabic {
+            text-align: right;
+            font-family: 'Arial';
+            font-weight: bold;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+        }
+
+        .item-row:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .item-row.active {
+            background: #e2e8f0;
+            border-color: var(--primary);
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 400px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Système de Gestion des Gardes - DSP.DJELFA</h1>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 0.9rem; color: #64748b;">Connecté en tant que: <b>{{ current_user.username
+                        }}</b></span>
+                <button onclick="showDairaModal()">Gérer Dairas</button>
+                <a href="/history"><button class="secondary">Historique</button></a>
+                <a href="/logout"><button class="danger">Déconnexion</button></a>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Sidebar: Navigation -->
+            <div class="sidebar">
+                <div class="card">
+                    <h2>Sélectionner Daira</h2>
+                    <select id="dairaSelect" onchange="loadMunicipalities()"></select>
+                </div>
+
+                <div class="card">
+                    <h2>Commune <button class="btn-sm success" onclick="showMuniModal()">+</button></h2>
+                    <div id="muniList"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Générer PDF</h2>
+                    <div class="form-group">
+                        <select id="month">
+                            <option value="1">Janvier</option>
+                            <option value="2" selected>Février</option>
+                            <option value="3">Mars</option>
+                            <option value="4">Avril</option>
+                            <option value="5">Mai</option>
+                            <option value="6">Juin</option>
+                            <option value="7">Juillet</option>
+                            <option value="8">Août</option>
+                            <option value="9">Septembre</option>
+                            <option value="10">Octobre</option>
+                            <option value="11">Novembre</option>
+                            <option value="12">Décembre</option>
+                        </select>
+                        <input type="number" id="year" value="2025">
+                    </div>
+                    <button style="width:100%; margin-bottom: 5px;" onclick="downloadPDF()">Imprimer le tableau
+                        (Daira)</button>
+                    <button style="width:100%" class="secondary" onclick="downloadAllDairasPDF()">Imprimer tous les
+                        tableaux
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content: Pharmacists -->
+            <div class="main-content">
+                <div class="card">
+                    <h2>Pharmaciens
+                        <div class="actions">
+                            <button class="btn-sm success" onclick="showPhModal()">+</button>
+                            <button class="btn-sm" onclick="triggerExcel()" title="Import Excel">Excel</button>
+                            <input type="file" id="excelFile" style="display:none" accept=".xlsx, .xls"
+                                onchange="importExcel()">
+                        </div>
+                    </h2>
+                    <table id="phTable">
+                        <thead>
+                            <tr>
+                                <th>Nom FR</th>
+                                <th>Adresse</th>
+                                <th>Ordre</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Daira Modal -->
+    <div id="dairaModal" class="modal">
+        <div class="modal-content">
+            <h2>Gérer Dairas</h2>
+            <div id="dairaManagerList" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <hr>
+            <h3>Nouvelle Daira</h3>
+            <input type="text" id="dNameFr" placeholder="Nom FR">
+            <input type="text" id="dNameAr" placeholder="الاسم AR" class="arabic">
+            <div class="action-row">
+                <button onclick="saveDaira()">Ajouter</button>
+                <button class="secondary" onclick="closeModals()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Municipality Modal -->
+    <div id="muniModal" class="modal">
+        <div class="modal-content">
+            <h2 id="muniModalTitle">Ajouter Municipalité</h2>
+            <input type="hidden" id="editMuniId">
+            <input type="text" id="mNameFr" placeholder="Nom FR">
+            <input type="text" id="mNameAr" placeholder="الاسم AR" class="arabic">
+            <div class="action-row">
+                <button onclick="saveMunicipality()">Enregistrer</button>
+                <button class="secondary" onclick="closeModals()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pharmacist Modal -->
+    <div id="phModal" class="modal">
+        <div class="modal-content">
+            <h2 id="phModalTitle">Ajouter Pharmacien</h2>
+            <input type="hidden" id="editPhId">
+            <div class="form-group">
+                <input type="text" id="phNameFr" placeholder="Nom FR">
+                <input type="text" id="phAddrFr" placeholder="Adresse">
+                <input type="number" id="phOrder" placeholder="Ordre de rotation" value="0">
+            </div>
+            <div class="action-row">
+                <button onclick="savePharmacist()">Enregistrer</button>
+                <button class="secondary" onclick="closeModals()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Vacation Modal -->
+    <div id="vacModal" class="modal">
+        <div class="modal-content">
+            <h2 id="vacModalTitle">Gérer les Vacances</h2>
+            <div id="vacList" style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <hr>
+            <h3>Nouvelle Absence</h3>
+            <input type="hidden" id="vacPhId">
+            <div class="form-group">
+                <label>Début:</label>
+                <input type="date" id="vacStart">
+                <label>Fin:</label>
+                <input type="date" id="vacEnd">
+            </div>
+            <div class="action-row">
+                <button onclick="saveVacation()">Enregistrer</button>
+                <button class="secondary" onclick="closeModals()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDairaId = null;
+        let currentMuniId = null;
+
+        async function api(url, method = 'GET', body = null) {
+            const opt = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) opt.body = JSON.stringify(body);
+            const r = await fetch(url, opt);
+            if (!r.ok) { alert("Erreur serveur"); return null; }
+            return r.json();
+        }
+
+        // --- DAIRA ---
+        async function loadDairas() {
+            const ds = await api('/api/dairas');
+            const sel = document.getElementById('dairaSelect');
+            sel.innerHTML = ds.map(d => `<option value="${d.id}">${d.name_fr}</option>`).join('');
+            if (ds.length > 0) {
+                if (!currentDairaId) currentDairaId = ds[0].id;
+                loadMunicipalities();
+            }
+            renderDairaManager(ds);
+        }
+
+        function renderDairaManager(ds) {
+            const list = document.getElementById('dairaManagerList');
+            list.innerHTML = ds.map(d => `
+                <div class="item-row">
+                    <span>${d.name_fr}</span>
+                    <div class="actions">
+                        <button class="btn-sm danger" onclick="deleteDaira(${d.id})">Del</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveDaira() {
+            const body = { name_fr: document.getElementById('dNameFr').value, name_ar: document.getElementById('dNameAr').value };
+            await api('/api/dairas', 'POST', body);
+            loadDairas();
+            closeModals();
+        }
+
+        async function deleteDaira(id) {
+            if (confirm("Supprimer cette Daira ? (supprime tout son contenu)")) {
+                await api(`/api/dairas/${id}`, 'DELETE');
+                loadDairas();
+            }
+        }
+
+        // --- MUNICIPALITY ---
+        async function loadMunicipalities() {
+            currentDairaId = document.getElementById('dairaSelect').value;
+            const ms = await api(`/api/municipalities?daira_id=${currentDairaId}`);
+            const list = document.getElementById('muniList');
+            list.innerHTML = ms.map(m => `
+                <div class="item-row ${m.id == currentMuniId ? 'active' : ''}" id="muni-row-${m.id}" onclick="selectMuni(${m.id})">
+                    <span>${m.name_fr}</span>
+                    <div class="actions">
+                        <button class="btn-sm secondary" onclick="editMuni(${m.id}, '${m.name_fr}', '${m.name_ar}', event)">Edit</button>
+                        <button class="btn-sm danger" onclick="deleteMuni(${m.id}, event)">Del</button>
+                    </div>
+                </div>
+            `).join('');
+            if (ms.length > 0 && !currentMuniId) selectMuni(ms[0].id);
+            else if (currentMuniId) selectMuni(currentMuniId);
+        }
+
+        function selectMuni(id) {
+            currentMuniId = id;
+            document.querySelectorAll('.item-row').forEach(el => el.classList.remove('active'));
+            const el = document.getElementById(`muni-row-${id}`);
+            if (el) el.classList.add('active');
+            loadPharmacists(id);
+        }
+
+        async function saveMunicipality() {
+            const id = document.getElementById('editMuniId').value;
+            const body = {
+                name_fr: document.getElementById('mNameFr').value,
+                name_ar: document.getElementById('mNameAr').value,
+                daira_id: currentDairaId
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/municipalities/${id}` : '/api/municipalities';
+            await api(url, method, body);
+            loadMunicipalities();
+            closeModals();
+        }
+
+        async function deleteMuni(id, e) {
+            e.stopPropagation();
+            if (confirm("Supprimer cette municipalité ?")) {
+                await api(`/api/municipalities/${id}`, 'DELETE');
+                currentMuniId = null;
+                loadMunicipalities();
+            }
+        }
+
+        // --- PHARMACIST ---
+        async function loadPharmacists(mId) {
+            const phs = await api(`/api/pharmacists?municipality_id=${mId}`);
+            const tbody = document.querySelector('#phTable tbody');
+            tbody.innerHTML = (phs || []).map(p => `
+                <tr>
+                    <td>${p.name_fr}</td>
+                    <td>${p.address_fr || ''}</td>
+                    <td>${p.rotation_order}</td>
+                    <td>
+                        <button class="btn-sm secondary" onclick="editPh(${JSON.stringify(p).replace(/"/g, '&quot;')})">Edit</button>
+                        <button class="btn-sm" style="background:#8b5cf6" onclick="showVacModal(${p.id}, '${p.name_fr}')">Vac</button>
+                        <button class="btn-sm danger" onclick="deletePh(${p.id})">Del</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function savePharmacist() {
+            const id = document.getElementById('editPhId').value;
+            const body = {
+                name_fr: document.getElementById('phNameFr').value,
+                address_fr: document.getElementById('phAddrFr').value,
+                rotation_order: parseInt(document.getElementById('phOrder').value) || 0,
+                municipality_id: currentMuniId
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/pharmacists/${id}` : '/api/pharmacists';
+            await api(url, method, body);
+            loadPharmacists(currentMuniId);
+            closeModals();
+        }
+
+        async function deletePh(id) {
+            if (confirm("Supprimer ce pharmacien ?")) {
+                await api(`/api/pharmacists/${id}`, 'DELETE');
+                loadPharmacists(currentMuniId);
+            }
+        }
+
+        // --- MODALS HELPERS ---
+        function showDairaModal() { document.getElementById('dairaModal').style.display = 'flex'; }
+        function showMuniModal() {
+            document.getElementById('editMuniId').value = '';
+            document.getElementById('mNameFr').value = '';
+            document.getElementById('mNameAr').value = '';
+            document.getElementById('muniModalTitle').innerText = 'Ajouter Municipalité';
+            document.getElementById('muniModal').style.display = 'flex';
+        }
+        function editMuni(id, fr, ar, e) {
+            e.stopPropagation();
+            document.getElementById('editMuniId').value = id;
+            document.getElementById('mNameFr').value = fr;
+            document.getElementById('mNameAr').value = ar;
+            document.getElementById('muniModalTitle').innerText = 'Modifier Municipalité';
+            document.getElementById('muniModal').style.display = 'flex';
+        }
+        function showPhModal() {
+            document.getElementById('editPhId').value = '';
+            document.getElementById('phNameFr').value = '';
+            document.getElementById('phAddrFr').value = '';
+            document.getElementById('phOrder').value = '';
+            document.getElementById('phModalTitle').innerText = 'Ajouter Pharmacien';
+            document.getElementById('phModal').style.display = 'flex';
+        }
+        function editPh(p) {
+            document.getElementById('editPhId').value = p.id;
+            document.getElementById('phNameFr').value = p.name_fr;
+            document.getElementById('phAddrFr').value = p.address_fr || '';
+            document.getElementById('phOrder').value = p.rotation_order;
+            document.getElementById('phModalTitle').innerText = 'Modifier Pharmacien';
+            document.getElementById('phModal').style.display = 'flex';
+        }
+
+        // --- VACATIONS ---
+        async function showVacModal(phId, phName) {
+            document.getElementById('vacModalTitle').innerText = `Vacances - ${phName}`;
+            document.getElementById('vacPhId').value = phId;
+            document.getElementById('vacStart').value = '';
+            document.getElementById('vacEnd').value = '';
+            await loadVacations(phId);
+            document.getElementById('vacModal').style.display = 'flex';
+        }
+
+        async function loadVacations(phId) {
+            const vs = await api(`/api/vacations?pharmacist_id=${phId}`);
+            const list = document.getElementById('vacList');
+            if (!vs || vs.length === 0) {
+                list.innerHTML = '<p style="font-size:0.8rem; color:#64748b">Aucune vacance enregistrée</p>';
+                return;
+            }
+            list.innerHTML = vs.map(v => `
+                <div class="item-row">
+                    <span style="font-size:0.8rem">Du ${new Date(v.start_date).toLocaleDateString()} au ${new Date(v.end_date).toLocaleDateString()}</span>
+                    <button class="btn-sm danger" onclick="deleteVacation(${v.id}, ${phId})">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function saveVacation() {
+            const phId = document.getElementById('vacPhId').value;
+            const body = {
+                pharmacist_id: phId,
+                start_date: document.getElementById('vacStart').value,
+                end_date: document.getElementById('vacEnd').value
+            };
+            if (!body.start_date || !body.end_date) return alert("Dates requises");
+            await api('/api/vacations', 'POST', body);
+            loadVacations(phId);
+        }
+
+        async function deleteVacation(id, phId) {
+            if (confirm("Supprimer cette absence ?")) {
+                await api(`/api/vacations/${id}`, 'DELETE');
+                loadVacations(phId);
+            }
+        }
+
+        // --- EXCEL IMPORT ---
+        function triggerExcel() {
+            if (!currentMuniId) return alert("Veuillez d'abord sélectionner une municipalité");
+            document.getElementById('excelFile').click();
+        }
+
+        async function importExcel() {
+            const fileInput = document.getElementById('excelFile');
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('municipality_id', currentMuniId);
+
+            try {
+                const r = await fetch('/api/pharmacists/import-excel', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await r.json();
+                if (r.ok) {
+                    alert(res.message);
+                    loadPharmacists(currentMuniId);
+                } else {
+                    alert("Erreur: " + res.error);
+                }
+            } catch (e) {
+                alert("Erreur lors de l'importation");
+            }
+            fileInput.value = ''; // Reset
+        }
+
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+        function downloadPDF() {
+            const m = document.getElementById('month').value;
+            const y = document.getElementById('year').value;
+            window.open(`/api/reports/monthly-pdf?month=${m}&year=${y}&daira_id=${currentDairaId}`, '_blank');
+        }
+
+        function downloadAllDairasPDF() {
+            const m = document.getElementById('month').value;
+            const y = document.getElementById('year').value;
+            window.open(`/api/reports/all-dairas-pdf?month=${m}&year=${y}`, '_blank');
+        }
+
+        document.getElementById('dairaSelect').addEventListener('change', () => {
+            currentDairaId = document.getElementById('dairaSelect').value;
+        });
+
+        loadDairas();
+    </script>
+</body>
+
+</html>
