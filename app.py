@@ -140,7 +140,7 @@ def history_page():
 @login_required
 def generate_monthly_pdf_api():
     month = int(request.args.get('month', 2))
-    year = int(request.args.get('year', 2025))
+    year = int(request.args.get('year', 2026))
     daira_id = request.args.get('daira_id', '1')
 
     generate_roster(year, month, daira_id)
@@ -183,7 +183,7 @@ def generate_monthly_pdf_api():
 @login_required
 def generate_all_dairas_pdf_api():
     month = int(request.args.get('month', 2))
-    year = int(request.args.get('year', 2025))
+    year = int(request.args.get('year', 2026))
 
     dairas = db.get_all_dairas()
 
@@ -230,7 +230,7 @@ def generate_all_dairas_pdf_api():
 @login_required
 def get_roster_preview():
     month = int(request.args.get('month', 2))
-    year = int(request.args.get('year', 2025))
+    year = int(request.args.get('year', 2026))
     daira_id = request.args.get('daira_id', '1')
 
     duties = db.get_duties_for_month(year, month, daira_id)
