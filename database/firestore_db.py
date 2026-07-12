@@ -382,3 +382,22 @@ def create_default_admin():
         u = User(username="admin")
         u.set_password("admin123")
         _add("user", u.to_dict())
+
+
+# --- BULK OPERATIONS (for PDF generation) ---
+
+def get_all_pharmacists_dict() -> dict[str, Pharmacist]:
+    docs = list(_col("pharmacist").stream())
+    return {d.id: Pharmacist.from_dict(d.id, d.to_dict()) for d in docs}
+
+
+def get_duties_for_month_bulk(year: int, month: int) -> list[DutySchedule]:
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+    start_str = start_date.isoformat()
+    end_str = end_date.isoformat()
+    docs = _query_all("duty_schedule", [("date", ">=", start_str), ("date", "<", end_str)])
+    return [DutySchedule.from_dict(did, d) for did, d in docs]

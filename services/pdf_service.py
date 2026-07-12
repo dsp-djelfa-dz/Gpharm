@@ -89,10 +89,10 @@ def get_text_lines(pdf, text, width, font_style, font_size):
     import math
     return math.ceil(text_w / (width - 1)) # -1 for safety margin
 
-def generate_roster_pdf(year, month, daira, table_data, municipalities):
-    return generate_batch_roster_pdf(year, month, [(daira, table_data, municipalities)])
+def generate_roster_pdf(year, month, daira, table_data, municipalities, pharmacist_dict=None):
+    return generate_batch_roster_pdf(year, month, [(daira, table_data, municipalities)], pharmacist_dict)
 
-def generate_batch_roster_pdf(year, month, dairas_data):
+def generate_batch_roster_pdf(year, month, dairas_data, pharmacist_dict=None):
     """
     dairas_data: list of tuples (daira_obj, table_data, municipalities_list)
     """
@@ -149,8 +149,12 @@ def generate_batch_roster_pdf(year, month, dairas_data):
                 muni_duties = duties[j] if j < len(duties) else []
                 night_duty = next((d for d in muni_duties if d.shift_type == 'NIGHT'), None)
                 day_duty = next((d for d in muni_duties if d.shift_type == 'HOLIDAY_DAY'), None)
-                night_ph = db.get_pharmacist(night_duty.pharmacist_id) if night_duty else None
-                day_ph = db.get_pharmacist(day_duty.pharmacist_id) if day_duty else None
+                if pharmacist_dict:
+                    night_ph = pharmacist_dict.get(night_duty.pharmacist_id) if night_duty else None
+                    day_ph = pharmacist_dict.get(day_duty.pharmacist_id) if day_duty else None
+                else:
+                    night_ph = db.get_pharmacist(night_duty.pharmacist_id) if night_duty else None
+                    day_ph = db.get_pharmacist(day_duty.pharmacist_id) if day_duty else None
                 
                 day_text = ""
                 night_text = ""
