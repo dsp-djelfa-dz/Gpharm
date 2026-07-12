@@ -384,7 +384,7 @@ def create_default_admin():
         _add("user", u.to_dict())
 
 
-# --- BULK OPERATIONS (for PDF generation) ---
+# --- BULK OPERATIONS (for PDF and roster generation) ---
 
 def get_all_pharmacists_dict() -> dict[str, Pharmacist]:
     docs = list(_col("pharmacist").stream())
@@ -400,4 +400,18 @@ def get_duties_for_month_bulk(year: int, month: int) -> list[DutySchedule]:
     start_str = start_date.isoformat()
     end_str = end_date.isoformat()
     docs = _query_all("duty_schedule", [("date", ">=", start_str), ("date", "<", end_str)])
+    return [DutySchedule.from_dict(did, d) for did, d in docs]
+
+
+def get_all_vacations_dict() -> dict[str, list[Vacation]]:
+    docs = list(_col("vacation").stream())
+    result = {}
+    for d in docs:
+        v = Vacation.from_dict(d.id, d.to_dict())
+        result.setdefault(v.pharmacist_id, []).append(v)
+    return result
+
+
+def get_all_duties_before_bulk(date_str: str) -> list[DutySchedule]:
+    docs = _query_all("duty_schedule", [("date", "<", date_str)])
     return [DutySchedule.from_dict(did, d) for did, d in docs]
