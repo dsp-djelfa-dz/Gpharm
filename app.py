@@ -143,93 +143,31 @@ def generate_monthly_pdf_api():
     year = int(request.args.get('year', 2026))
     daira_id = request.args.get('daira_id', '1')
 
-    generate_roster(year, month, daira_id)
+    try:
+        generate_roster(year, month, daira_id)
 
-    daira = db.get_daira(daira_id)
-    municipalities = db.get_municipalities_by_daira(daira_id)
-    days = get_days_in_month(year, month)
-    pharmacist_dict = db.get_all_pharmacists_dict()
-    all_duties = db.get_duties_for_month_bulk(year, month)
-
-    muni_ids = {m.id for m in municipalities}
-    duty_index = {}
-    for d in all_duties:
-        if d.municipality_id in muni_ids:
-            key = (d.date.isoformat(), d.municipality_id)
-            duty_index.setdefault(key, []).append(d)
-
-    table_data = []
-    day_names_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
-    day_names_ar = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
-
-    for d in days:
-        day_duties_grouped = []
-        for muni in municipalities:
-            key = (d.isoformat(), muni.id)
-            duties = duty_index.get(key, [])
-            day_duties_grouped.append(duties)
-
-        table_data.append((
-            d,
-            day_names_fr[d.weekday()],
-            day_names_ar[d.weekday()],
-            day_duties_grouped
-        ))
-
-    pdf_bytes = generate_roster_pdf(year, month, daira, table_data, municipalities, pharmacist_dict)
-
-    filename = f"Garde_{calendar.month_name[month]}_{year}_{daira.name_fr}.pdf"
-
-    return send_file(
-        BytesIO(pdf_bytes),
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=filename
-    )
-
-
-@app.route('/api/reports/all-dairas-pdf', methods=['GET'])
-@login_required
-def generate_all_dairas_pdf_api():
-    month = int(request.args.get('month', 2))
-    year = int(request.args.get('year', 2026))
-
-    dairas = db.get_all_dairas()
-    pharmacist_dict = db.get_all_pharmacists_dict()
-    all_duties = db.get_duties_for_month_bulk(year, month)
-    all_municipalities = db.get_all_municipalities()
-
-    muni_to_daira = {m.id: m.daira_id for m in all_municipalities}
-    duty_by_daira = {}
-    for d in all_duties:
-        daira_id = muni_to_daira.get(d.municipality_id)
-        if daira_id:
-            key = (daira_id, d.date.isoformat(), d.municipality_id)
-            duty_by_daira.setdefault(key, []).append(d)
-
-    muni_by_daira = {}
-    for m in all_municipalities:
-        muni_by_daira.setdefault(m.daira_id, []).append(m)
-
-    all_dairas_data = []
-    day_names_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
-    day_names_ar = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
-
-    for daira in dairas:
-        generate_roster(year, month, daira.id)
-
-        municipalities = muni_by_daira.get(daira.id, [])
+        daira = db.get_daira(daira_id)
+        municipalities = db.get_municipalities_by_daira(daira_id)
         days = get_days_in_month(year, month)
+        pharmacist_dict = db.get_all_pharmacists_dict()
+        all_duties = db.get_duties_for_month_bulk(year, month)
 
-        if not municipalities:
-            continue
+        muni_ids = {m.id for m in municipalities}
+        duty_index = {}
+        for d in all_duties:
+            if d.municipality_id in muni_ids:
+                key = (d.date.isoformat(), d.municipality_id)
+                duty_index.setdefault(key, []).append(d)
 
         table_data = []
+        day_names_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+        day_names_ar = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+
         for d in days:
             day_duties_grouped = []
             for muni in municipalities:
-                key = (daira.id, d.isoformat(), muni.id)
-                duties = duty_by_daira.get(key, [])
+                key = (d.isoformat(), muni.id)
+                duties = duty_index.get(key, [])
                 day_duties_grouped.append(duties)
 
             table_data.append((
@@ -239,18 +177,91 @@ def generate_all_dairas_pdf_api():
                 day_duties_grouped
             ))
 
-        all_dairas_data.append((daira, table_data, municipalities))
+        pdf_bytes = generate_roster_pdf(year, month, daira, table_data, municipalities, pharmacist_dict)
 
-    pdf_bytes = generate_batch_roster_pdf(year, month, all_dairas_data, pharmacist_dict)
+        filename = f"Garde_{calendar.month_name[month]}_{year}_{daira.name_fr}.pdf"
 
-    filename = f"Garde_Toutes_Dairas_{calendar.month_name[month]}_{year}.pdf"
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
-    return send_file(
-        BytesIO(pdf_bytes),
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=filename
-    )
+
+@app.route('/api/reports/all-dairas-pdf', methods=['GET'])
+@login_required
+def generate_all_dairas_pdf_api():
+    month = int(request.args.get('month', 2))
+    year = int(request.args.get('year', 2026))
+
+    try:
+        dairas = db.get_all_dairas()
+        all_municipalities = db.get_all_municipalities()
+
+        muni_by_daira = {}
+        for m in all_municipalities:
+            muni_by_daira.setdefault(m.daira_id, []).append(m)
+
+        for daira in dairas:
+            generate_roster(year, month, daira.id)
+
+        pharmacist_dict = db.get_all_pharmacists_dict()
+        all_duties = db.get_duties_for_month_bulk(year, month)
+
+        muni_to_daira = {m.id: m.daira_id for m in all_municipalities}
+        duty_by_daira = {}
+        for d in all_duties:
+            daira_id = muni_to_daira.get(d.municipality_id)
+            if daira_id:
+                key = (daira_id, d.date.isoformat(), d.municipality_id)
+                duty_by_daira.setdefault(key, []).append(d)
+
+        all_dairas_data = []
+        day_names_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+        day_names_ar = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+
+        for daira in dairas:
+            municipalities = muni_by_daira.get(daira.id, [])
+            if not municipalities:
+                continue
+
+            days = get_days_in_month(year, month)
+            table_data = []
+            for d in days:
+                day_duties_grouped = []
+                for muni in municipalities:
+                    key = (daira.id, d.isoformat(), muni.id)
+                    duties = duty_by_daira.get(key, [])
+                    day_duties_grouped.append(duties)
+
+                table_data.append((
+                    d,
+                    day_names_fr[d.weekday()],
+                    day_names_ar[d.weekday()],
+                    day_duties_grouped
+                ))
+
+            all_dairas_data.append((daira, table_data, municipalities))
+
+        pdf_bytes = generate_batch_roster_pdf(year, month, all_dairas_data, pharmacist_dict)
+
+        filename = f"Garde_Toutes_Dairas_{calendar.month_name[month]}_{year}.pdf"
+
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/roster/preview', methods=['GET'])
