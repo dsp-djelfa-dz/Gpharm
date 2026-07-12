@@ -219,7 +219,7 @@
                     <div class="form-group">
                         <select id="month">
                             <option value="1">Janvier</option>
-                            <option value="2" selected>Février</option>
+                            <option value="2">Février</option>
                             <option value="3">Mars</option>
                             <option value="4">Avril</option>
                             <option value="5">Mai</option>
@@ -231,7 +231,7 @@
                             <option value="11">Novembre</option>
                             <option value="12">Décembre</option>
                         </select>
-                        <input type="number" id="year" value="2025">
+                        <input type="number" id="year">
                     </div>
                     <button style="width:100%; margin-bottom: 5px;" onclick="downloadPDF()">Imprimer le tableau
                         (Daira)</button>
@@ -609,6 +609,15 @@
         });
 
         loadDairas();
+
+        (function() {
+            var now = new Date();
+            var nextMonth = now.getMonth() + 2;
+            var nextYear = now.getFullYear();
+            if (nextMonth > 12) { nextMonth = 1; nextYear++; }
+            document.getElementById('month').value = nextMonth;
+            document.getElementById('year').value = nextYear;
+        })();
     </script>
 </body>
 
