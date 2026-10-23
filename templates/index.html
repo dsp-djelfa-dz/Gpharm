@@ -345,6 +345,14 @@
         let currentDairaId = null;
         let currentMuniId = null;
 
+        function escHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function escJs(s) {
+            return String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         async function api(url, method = 'GET', body = null) {
             const opt = { method, headers: { 'Content-Type': 'application/json' } };
             if (body) opt.body = JSON.stringify(body);
@@ -356,6 +364,7 @@
         // --- DAIRA ---
         async function loadDairas() {
             const ds = await api('/api/dairas');
+            if (!ds) return;
             const sel = document.getElementById('dairaSelect');
             sel.innerHTML = ds.map(d => `<option value="${d.id}">${d.name_fr}</option>`).join('');
             if (ds.length > 0) {
@@ -369,9 +378,9 @@
             const list = document.getElementById('dairaManagerList');
             list.innerHTML = ds.map(d => `
                 <div class="item-row">
-                    <span>${d.name_fr}</span>
+                    <span>${escHtml(d.name_fr)}</span>
                     <div class="actions">
-                        <button class="btn-sm danger" onclick="deleteDaira(${d.id})">Del</button>
+                        <button class="btn-sm danger" onclick="deleteDaira('${escJs(d.id)}')">Del</button>
                     </div>
                 </div>
             `).join('');
@@ -395,13 +404,14 @@
         async function loadMunicipalities() {
             currentDairaId = document.getElementById('dairaSelect').value;
             const ms = await api(`/api/municipalities?daira_id=${currentDairaId}`);
+            if (!ms) return;
             const list = document.getElementById('muniList');
             list.innerHTML = ms.map(m => `
-                <div class="item-row ${m.id == currentMuniId ? 'active' : ''}" id="muni-row-${m.id}" onclick="selectMuni(${m.id})">
-                    <span>${m.name_fr}</span>
+                <div class="item-row ${m.id == currentMuniId ? 'active' : ''}" id="muni-row-${m.id}" onclick="selectMuni('${escJs(m.id)}')">
+                    <span>${escHtml(m.name_fr)}</span>
                     <div class="actions">
-                        <button class="btn-sm secondary" onclick="editMuni(${m.id}, '${m.name_fr}', '${m.name_ar}', event)">Edit</button>
-                        <button class="btn-sm danger" onclick="deleteMuni(${m.id}, event)">Del</button>
+                        <button class="btn-sm secondary" onclick="editMuni('${escJs(m.id)}', '${escJs(m.name_fr)}', '${escJs(m.name_ar)}', event)">Edit</button>
+                        <button class="btn-sm danger" onclick="deleteMuni('${escJs(m.id)}', event)">Del</button>
                     </div>
                 </div>
             `).join('');
@@ -443,16 +453,17 @@
         // --- PHARMACIST ---
         async function loadPharmacists(mId) {
             const phs = await api(`/api/pharmacists?municipality_id=${mId}`);
+            if (!phs) return;
             const tbody = document.querySelector('#phTable tbody');
-            tbody.innerHTML = (phs || []).map(p => `
+            tbody.innerHTML = phs.map(p => `
                 <tr>
-                    <td>${p.name_fr}</td>
-                    <td>${p.address_fr || ''}</td>
+                    <td>${escHtml(p.name_fr)}</td>
+                    <td>${escHtml(p.address_fr || '')}</td>
                     <td>${p.rotation_order}</td>
                     <td>
-                        <button class="btn-sm secondary" onclick="editPh(${JSON.stringify(p).replace(/"/g, '&quot;')})">Edit</button>
-                        <button class="btn-sm" style="background:#8b5cf6" onclick="showVacModal(${p.id}, '${p.name_fr}')">Vac</button>
-                        <button class="btn-sm danger" onclick="deletePh(${p.id})">Del</button>
+                        <button class="btn-sm secondary" onclick="editPh(${JSON.stringify({ id: p.id, name_fr: p.name_fr, address_fr: p.address_fr || '', rotation_order: p.rotation_order }).replace(/"/g, '&quot;').replace(/</g, '&lt;')})">Edit</button>
+                        <button class="btn-sm" style="background:#8b5cf6" onclick="showVacModal('${escJs(p.id)}', '${escJs(p.name_fr)}')">Vac</button>
+                        <button class="btn-sm danger" onclick="deletePh('${escJs(p.id)}')">Del</button>
                     </td>
                 </tr>
             `).join('');
@@ -534,7 +545,7 @@
             list.innerHTML = vs.map(v => `
                 <div class="item-row">
                     <span style="font-size:0.8rem">Du ${new Date(v.start_date).toLocaleDateString()} au ${new Date(v.end_date).toLocaleDateString()}</span>
-                    <button class="btn-sm danger" onclick="deleteVacation(${v.id}, ${phId})">×</button>
+                    <button class="btn-sm danger" onclick="deleteVacation('${escJs(v.id)}', '${escJs(phId)}')">×</button>
                 </div>
             `).join('');
         }

@@ -120,7 +120,7 @@ def generate_batch_roster_pdf(year, month, dairas_data, pharmacist_dict=None):
         date_w = 8
         day_name_w = 18
         available_w = page_width - date_w - day_name_w
-        num_muni = min(len(municipalities), 5)
+        num_muni = len(municipalities)
         muni_w = available_w / num_muni if num_muni > 0 else available_w
         
         # Table Header
@@ -131,7 +131,7 @@ def generate_batch_roster_pdf(year, month, dairas_data, pharmacist_dict=None):
         pdf.cell(date_w, h, "Date", border=1, align="C", fill=True)
         pdf.cell(day_name_w, h, "Jour", border=1, align="C", fill=True)
         
-        for muni in municipalities[:num_muni]:
+        for muni in municipalities:
             pdf.cell(muni_w, h, muni.name_fr.upper(), border=1, align="C", fill=True)
         pdf.ln()
 
@@ -208,7 +208,7 @@ def generate_batch_roster_pdf(year, month, dairas_data, pharmacist_dict=None):
                 pdf.set_font(pdf.fn, "B", 8)
                 pdf.cell(date_w, h, "Date", border=1, align="C", fill=True)
                 pdf.cell(day_name_w, h, "Jour", border=1, align="C", fill=True)
-                for muni in municipalities[:num_muni]:
+                for muni in municipalities:
                     pdf.cell(muni_w, h, muni.name_fr.upper(), border=1, align="C", fill=True)
                 pdf.ln()
                 pdf.set_font(pdf.fn, "", 7)

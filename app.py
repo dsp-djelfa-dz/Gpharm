@@ -50,7 +50,9 @@ except Exception:
 
 from services.roster_service import generate_roster, generate_roster_cached, get_roster_data, get_days_in_month
 from services.pdf_service import generate_roster_pdf, generate_batch_roster_pdf
-import calendar
+
+MONTHS_FR = ["", "Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin",
+             "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"]
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -189,7 +191,7 @@ def generate_monthly_pdf_api():
 
         pdf_bytes = generate_roster_pdf(year, month, daira, table_data, municipalities, pharmacist_dict)
 
-        filename = f"Garde_{calendar.month_name[month]}_{year}_{daira.name_fr}.pdf"
+        filename = f"Garde_{MONTHS_FR[month]}_{year}_{daira.name_fr}.pdf"
 
         return send_file(
             BytesIO(pdf_bytes),
@@ -260,7 +262,7 @@ def generate_all_dairas_pdf_api():
 
         pdf_bytes = generate_batch_roster_pdf(year, month, all_dairas_data, pharmacist_dict)
 
-        filename = f"Garde_Toutes_Dairas_{calendar.month_name[month]}_{year}.pdf"
+        filename = f"Garde_Toutes_Dairas_{MONTHS_FR[month]}_{year}.pdf"
 
         return send_file(
             BytesIO(pdf_bytes),
